@@ -1,0 +1,318 @@
+(*
+#     This is fairly easy, but you must use functional programming:
+#
+#    You may not use local variables (defined with let), loops, global variables, etc.
+#    let may only be used to define functions.
+#    You may use the List module (hd, tl, mem, cons, append, nth, etc.)
+#    You may use if ... then ... else and match patterns
+#    Each problem will require helper functions, though List.mem may be sufficient
+#
+#
+#    Please name your functions exactly as they are in the project document (case sensitive).
+#    Instead of submitting a zip file, please submit three separate files. These files will include your readme, caml file, and log file.
+#    Please name the caml file sde2 -> "sde2.caml"
+#
+###
+#The overall objective of SDE2 is to implement 6 sets of functions
+#corresponding to 6 different list-based problems. Three of these problems
+#were inspired by actual coding tests given during interviews for
+#positions with companies such as Google, Amazon, Microsoft and
+#Apple. There are youtube videos that describe three of these problems
+#listed here. You should watch these. This project is to be done using a
+#purely functional programming paradigm and ocaml. Some of the
+#problems which inspired this assignment refer to arrays or strings. The
+#common (and required) data structure in this assignment is the ocaml list.
+#The problems are:
+#  Write a function First duplicate in a list problem:
+# Write a function First non-repeating in a list problem:
+#  Write a function for the "sum of 2" problem:
+# Write a function take
+# Write a function drop
+# Write a function powerset
+*)
+(* Sorry I was using my usual python IDE to write these out so the comments look really funky *)
+(*
+'''
+2.1 First Duplicate in a List (first_duplicate)
+Find and return the first duplicate in an integer list. You can see the
+problem formulation at:
+
+https://www.youtube.com/watch?v=XSdr_O-XVRQ
+
+Prototype:
+
+first_duplicate of a list returns -10000 if there are no duplications the integer list argument. Otherwise the first item that is the same (duplicate) of another item already passed in the list is returned. Note this is NOT the first item with a duplicate farther down the list, rather it is the first item with a duplicate BEFORE it on the list.
+
+Signature:
+
+val first_duplicate : int list -> int = <fun>
+
+Sample Use:
+
+# first_duplicate [1;2;3;4;5;6;7;4;5;8;9];;
+: int = 4
+# first_duplicate [1;2;3;4;5;6;7;8;5;2;9];;
+: int = 5
+# first_duplicate [1;2;3;4;5;6;7;8;9;10];;
+: int = -10000
+'''
+*)
+let rec first_duplicate_helper seen = function
+(* No duplicates found *)
+  | [] -> -10000 (* Default case of empty or now empty list*)
+  | x :: xs -> (* *)
+      if List.mem x seen then
+(*Found a duplicate,return it *)
+        x
+      else
+        first_duplicate_helper (x :: seen) xs (* RECURSION *)
+
+let first_duplicate lst =
+  first_duplicate_helper [] lst
+
+(*
+'''
+2.2 First Non-Repeating Element in a List 
+(first_nonrepeating) 
+Find the first item that is not in the integer list more than once. You can 
+see the problem formulation at: 
+
+https://youtube/5co5Gvp_-S0 
+
+Prototype: first_nonrepeating of a list returns -10000 if there are 
+no non-repeated (non-duplicated) element in the list. Otherwise it 
+returns the first non-repeating element in the integer list. 
+
+Signature: 
+
+val first_nonrepeating : int list -> int = <fun> 
+
+Sample Use: 
+
+# first_nonrepeating [1;2;3;2;7;5;6;1;3];;
+: int = 7 
+# first_nonrepeating [1;2;9;3;2;7;5;6;1;3];;
+: int = 9 
+# first_nonrepeating [1;2;9;3;2;7;5;6;10;30];;
+: int = 1 
+# first_nonrepeating [1;2;9;3;2;7;5;6;1;10;30];;
+: int = 9 
+# first_nonrepeating [1;2;9;3;2;7;5;9;6;1;10;30];;
+: int = 3 
+# first_nonrepeating [1;2;3;2;7;5;6;1;3];;
+: int = 7 
+# first_nonrepeating [1;2;3;4;5;1;2;3;4;5];;
+: int = -10000 
+# first_nonrepeating [1;2;3;4;5;1;2;3;4;9];;
+: int = 5 
+# first_nonrepeating [1;1;1;2;2;2];;
+: int = -10000 
+    '''
+    *)
+
+let first_nonrepeating lst =
+  (* The start of the function*)
+  (* Inner function of count occurences*)
+  let rec count_occurrences acc = function
+    (* Go through and count everything*)
+    (* Everything is counted, return the accumulator*)
+    | [] -> acc
+(* Or it is not so split into head and  tail*)
+    | x :: xs ->
+        (* Count the amount that matches *)
+        let count =
+          (* Check the accumulator for X and retrieve count as c*)
+          match List.assoc_opt x acc with
+          | Some c -> c + 1 (* We have matches so increment*)
+          | None -> 1 (* No matches so one, adding to the accumulator list*)
+        in
+        count_occurrences ((x, count) :: List.remove_assoc x acc) xs (* RECURSION *)
+  in
+  let occurrences = count_occurrences [] lst in
+  let rec find_first_nonrepeating first_nonrepeating_element = function
+    | [] -> first_nonrepeating_element (* Empty Accumulator means processed list, so return the nonrepeating element*)
+    | (x, count) :: xs -> (* Split into variables to use since the list is not empty and look for x*)
+        if count = 1 then
+          find_first_nonrepeating x xs (* X has not been repeated so check the rest of the function for non repeats*)
+        else
+          find_first_nonrepeating first_nonrepeating_element xs (* RECURSION number repeated *)
+  in
+  find_first_nonrepeating (-10000) occurrences (* Case where there is only repeats*)
+
+(*
+'''
+2.3 The Sum of 2 Problem (sumOfTwo) 
+Look for a pair on elements from two integer lists that sum to a given value.
+You can see the problem formulation at: 
+
+https://www.youtube.com/watch?v=BoHO04xVeU0https://www.youtube.com/watch?v=sfuZzBLPcx4 
+
+Two arrays contain numbers able to produce a given sum. A sample case 
+from the video: 
+
+If a=[1;2;3], b=[10;20,30,40] and v=42, thensumOfTwo(a,b,v)=true 
+
+because (2+40)=42=v. 
+
+If a=[1;2;3], b=[10;20,30,40] and v=45, thensumOfTwo(a,b,v)=false 
+
+because none of 11,21,31,41,12,22,32,42,13,23,33,43is equal to 45 (v). 
+
+Prototype: sumOfTwo(a,b,v) returns false if there does not exdist 
+and integer in a, which added to any integer in b, equals v. If 
+there is an integer in a, and an integer in b that sum to v, return 
+true. 
+
+Signature: 
+
+val sumOfTwo : int list * int list * int -> bool = <fun> 
+
+Sample Use: 
+
+# sumOfTwo([1;2;3],[10;20;30;40],42);;
+: bool = true 
+# sumOfTwo([1;2;3],[10;20;30;40],40);;
+: bool = false 
+# sumOfTwo([1;2;3],[10;20;30;40],41);;
+: bool = true 
+# sumOfTwo([1;2;3],[10;20;30;40],43);;
+: bool = true 
+# sumOfTwo([1;2;3],[10;20;30;40],44);;
+: bool = false 
+# sumOfTwo([1;2;3],[10;20;30;40],11);;
+: bool = true 
+# sumOfTwo([1;2;3],[10;20;30;40],15);;
+: bool = false 
+'''
+*)
+
+let rec exists_sum a b v =
+  match a with
+  | [] -> false (*Ran out of list elements to compare to, so false *)
+  | x :: xs ->
+      if List.exists (fun y -> x + y = v) b then (* If there is a sum to be made *)
+        true (* Return true *)
+      else
+        exists_sum xs b v (* Recursivley Call on the rest the list *)
+
+let sumOfTwo (a, b, v) =
+  exists_sum a b v (* Immediatley sending this off for recursion purposes*)
+
+      (*
+'''
+    2.4  Write the function take : 
+
+Signature: 
+
+    val take : int * 'a list -> 'a list = <fun>
+
+
+such that take n lst returns the first n elements of lst. If list has fewer than n elements, return all of them. If n < 0 then return an empty list
+
+Sample Use: 
+
+#take (2, [1;2;3;4]);;
+      [1;2];
+
+#take (15, [1;2;3;4]);;
+      [1;2;3;4]
+
+#take (-1, [1;2;3;4]);;
+      []
+'''
+*)
+
+let rec take (n, lst) =
+  (* Get rid of all negative numbers and 0 *)
+  if n <= 0 then
+    []
+(* positive integers only now in n*)
+  else
+    match lst with
+    | [] -> [] (* We have removed all values from array so its just empty *)
+    | x :: xs -> (* Or we match if it has a head x and all the tail stuff xs *)
+        if n = 1 then
+          (* Function only has one value remaining so return the head*)
+          [x]
+        else
+          x :: take (n - 1, xs) (* RECURSION *)
+
+(*
+'''
+2.5) Write a function drop : 
+
+Signature: 
+
+val drop : int * 'a list -> 'a list = <fun>
+
+such that drop n lst returns all but the first n elements of lst. If lst has fewer than n elements, return the empty list.  If n < 0 then return an empty list
+
+Sample Use: 
+#drop (2, [1;2;3;4]);;
+[3;4];
+
+#drop (2,[1;2;3;4;5;6]);;
+[3;4;5;6];
+
+#drop (15, [1;2;3;4]);;
+[]
+
+#drop (-1, [1;2;3;4]);;
+[]
+
+#drop (0, [1;2;3;4]);;
+[1;2;3;4]
+'''
+*)
+
+
+let rec drop (n, lst) =
+  (* Return the 0 since dropping 0 is just the list*)
+  if n = 0 then
+    lst
+(* Negative numbers return an empty list based the -1 test case *)
+  else if n < 0 then
+    []
+(* Every other number *)
+  else
+    match lst with
+    | [] -> []      (* This is the empty list so exit recursion*)
+    | _ :: xs ->    (* xs is the rest of lst after matching first element to _*)
+        if n = 1 then
+          xs (* We have succesfully removed all elements as xs is the recursived lst with the last one removed *)
+        else
+          drop (n - 1, xs) (* RECURSION *)
+
+(*
+'''
+
+2.6) Write a function powerset : 
+
+Signature: 
+
+    val powerset : int list -> int list list = <fun>
+
+that takes a set S represented as a list and returns the set of all subsets of S. The order of subsets in the powerset and the order of elements in the subsets do not matter.
+
+Hint: Consider the recursive structure of this problem. Suppose you already have p, such that p = powerset s. How could you use p to compute powerset (x::s)?
+
+Sample Use: 
+
+#powerset [1;2;3];;
+
+    [[];[1];[2];[3];[1;2];[1;3];[2;3][1;2;3]]  (*order is not significant*)
+
+#powerset [1;2];;
+
+    [[];[1];[2];[1;2]]  (*order is not significant*)
+
+#powerset [1;2;3;4];;
+
+    [[];[1];[2];[3];[4];[1;2];[1;3];[1;4];[2;3];[2;4];[3;4];[1;2;3];[1;2;4];[1;3;4];[2;3;4][1;2;3;4]]  (*order is not significant*)
+'''
+*)
+let rec powerset = function
+  | [] -> [[]]  (* Empty Set, base case for processing everything *)
+  | x :: s ->
+      let p = powerset s in  (* RECURSION *)
+      p @ List.map (fun subset -> x :: subset) p  (* Add x to each subset in p and combine with p *)
